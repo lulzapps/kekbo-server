@@ -13,6 +13,23 @@ services:
       - ./mosquitto/log:/mosquitto/log
     restart: unless-stopped
 
+  mariadb:
+      image: mariadb:latest # replace with actual image if it's available
+      container_name: mariadb
+      environment:
+        MYSQL_ROOT_PASSWORD: rootpassword  # Root user password
+        MYSQL_DATABASE: mydatabase         # Database to be created
+        MYSQL_USER: myuser                 # Additional user to be created
+        MYSQL_PASSWORD: mypassword         # Password for the additional user
+        MARIA_DB_USER: admin
+        MARIA_DB_PASSWORD: admin_password
+      ports:
+        - "3306:3306" 
+      volumes:
+        - ./mariadb/data:/data/db
+        - ../sql:/docker-entrypoint-initdb.d  # Mount your SQL script
+      restart: unless-stopped
+
   kekbosrv:
     build:
       context: ..

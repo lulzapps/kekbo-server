@@ -7,6 +7,9 @@ WORKDIR /kekbosrv
 # Copy the current directory contents into the container at /app
 COPY kekbosrv.py /kekbosrv
 COPY requirements.txt /kekbosrv
+COPY MqttConnector.py /kekbosrv
+
+COPY ./sql/init.sql /docker-entrypoint-initdb.d/
 
 # Install the required packages
 RUN pip install -r requirements.txt
