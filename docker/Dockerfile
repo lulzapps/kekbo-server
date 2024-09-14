@@ -5,7 +5,8 @@ FROM python:3.10-slim
 WORKDIR /kekbosrv
 
 # Copy the current directory contents into the container at /app
-COPY . /kekbosrv
+COPY kekbosrv.py /kekbosrv
+COPY requirements.txt /kekbosrv
 
 # Install the required packages
 RUN pip install -r requirements.txt
