@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import MqttConnector
+import os
 
 app = FastAPI()
 
@@ -9,36 +10,30 @@ class PublishMessage(BaseModel):
     topic: str
     message: str
 
+def running_in_docker():
+    if os.path.exists("/.dockerenv"):
+        return True
+    try:
+        with open("/proc/1/cgroup", "rt") as f:
+            for line in f:
+                if "docker" in line:
+                    return True
+    except FileNotFoundError:
+        pass
+    return False
+
 # Define MQTT broker connection settings
-BROKER_HOST = "mosquitto"
-# BROKER_HOST = "localhost"
-BROKER_PORT = 9001         # MQTT over WebSockets port
+BROKER_DOCKER_HOST = "mosquitto"
+BROKER_DOCKR_PORT = 9001 
 
-# Callback when the client receives a CONNACK response from the server
-def on_connect(client, userdata, flags, rc):
-    if rc == 0:
-        print("Connected to MQTT Broker!")
-        client.subscribe("test/topic")  # Subscribe to a topic for testing
-    else:
-        print(f"Failed to connect, return code {rc}")
-
-# Callback when a PUBLISH message is received from the server
-def on_message(client, userdata, msg):
-    print(f"Received message: {msg.payload.decode()} on topic {msg.topic}")
+BROKER_NATIVE_HOST = "localhost"
+BROKER_NATIVE_PORT = 9001
 
 # Initialize the MQTT client
-mqtt_client = MqttConnector.MqttConnector(BROKER_HOST, BROKER_PORT)
-
-# # Initialize the MQTT client
-# mqtt_client = mqtt.Client(transport="websockets")
-# mqtt_client.on_connect = on_connect
-# mqtt_client.on_message = on_message
-
-# # Connect to the MQTT broker
-# mqtt_client.connect(BROKER_HOST, BROKER_PORT, 60)
-
-# # Start the MQTT client loop in the background
-# mqtt_client.loop_start()
+if running_in_docker():
+    mqtt_client = MqttConnector.MqttConnector(BROKER_DOCKER_HOST, BROKER_DOCKR_PORT)
+else:
+    mqtt_client = MqttConnector.MqttConnector(BROKER_NATIVE_HOST, BROKER_NATIVE_PORT)
 
 @app.get("/helloworld")
 async def helloworld():
@@ -47,9 +42,9 @@ async def helloworld():
 # Use the Pydantic model to validate the request body
 @app.post("/publish")
 async def publish_message(data: PublishMessage):
-    # mqtt_client.publish(data.topic, data.message)
     mqtt_client.publish_message(data.topic, data.message)
     return {"status": "Message published"}
+
 
 if __name__ == "__main__":
     import uvicorn
