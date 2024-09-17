@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from pydantic import BaseModel
 import MqttConnector
 import os
@@ -45,6 +45,14 @@ async def publish_message(data: PublishMessage):
     mqtt_client.publish_message(data.topic, data.message)
     return {"status": "Message published"}
 
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    print("WebSocket connection established")
+    await websocket.accept()
+    while True:
+        data = await websocket.receive_text()
+        print(f"Received: {data}")
+        await websocket.send_text(f"Message text was: {data}")
 
 if __name__ == "__main__":
     import uvicorn
