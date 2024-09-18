@@ -1,11 +1,14 @@
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 import MqttConnector
 import os
+import logging
 
 app = FastAPI()
 
-# Define a Pydantic model for the incoming POST request
+logger = logging.getLogger('uvicorn.error')
+logger.setLevel(logging.DEBUG)
+
 class PublishMessage(BaseModel):
     topic: str
     message: str
@@ -49,10 +52,15 @@ async def publish_message(data: PublishMessage):
 async def websocket_endpoint(websocket: WebSocket):
     print("WebSocket connection established")
     await websocket.accept()
-    while True:
-        data = await websocket.receive_text()
-        print(f"Received: {data}")
-        await websocket.send_text(f"Message text was: {data}")
+    try:
+        while True:
+            data = await websocket.receive_text()
+            logger.debug(f"Received: {data}")
+            await websocket.send_text(f"Message text was: {data}")
+    except WebSocketDisconnect:
+        logger.info("WebSocket connection disconnected")
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}")
 
 if __name__ == "__main__":
     import uvicorn
