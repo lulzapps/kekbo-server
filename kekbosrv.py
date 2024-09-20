@@ -54,6 +54,7 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
         while True:
+            print("waiting for text")
             data = await websocket.receive_text()
             logger.debug(f"Received: {data}")
             await websocket.send_text(f"Message text was: {data}")
@@ -64,5 +65,5 @@ async def websocket_endpoint(websocket: WebSocket):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="debug")
     
