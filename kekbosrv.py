@@ -50,11 +50,11 @@ async def publish_message(data: PublishMessage):
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    print("WebSocket connection established")
+    logger.debug("WebSocket connection established")
     await websocket.accept()
     try:
         while True:
-            print("waiting for text")
+            logger.debug("waiting for text")
             data = await websocket.receive_text()
             logger.debug(f"Received: {data}")
             await websocket.send_text(f"Message text was: {data}")
@@ -63,6 +63,7 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
 
+# uvicorn kekbosrv:app --log-level debug
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="debug")
