@@ -6,6 +6,12 @@
 * Checkout the code `git clone <repo>`
 * `cd kekbo-serv`
 * Create a virtual Python environment: `python3.12 -m venv <virtual-env-folder>` (i.e. `py_win`)
+
+* Depending on your system, you may have to allow PowerShel to run PowerScripts:
+```ps
+Set-ExecutionPolicy -ExecutionPolicy Unrestricted
+```
+
 * Activate the virtual Python environment: `./<virtual-en-folder>/Scripts/Activate.ps1`
 * Install dependencies: `pip install -r requirements.txt`
 
