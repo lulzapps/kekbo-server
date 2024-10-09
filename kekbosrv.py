@@ -3,6 +3,7 @@ from pydantic import BaseModel
 import MqttConnector
 import os
 import logging
+import json
 
 app = FastAPI()
 
@@ -57,7 +58,14 @@ async def websocket_endpoint(websocket: WebSocket):
             logger.debug("waiting for text")
             data = await websocket.receive_text()
             logger.debug(f"Received: {data}")
-            await websocket.send_text(f"Message text was: {data}")
+
+            # parse the received message into json
+            message = json.loads(data)
+            if message["action"] == "login":
+                logger.debug(f"Logging in as {message['username']}")
+                await websocket.send_text('{"status": "success"}')    
+            else:
+                await websocket.send_text(f"Message text was: {data}")
     except WebSocketDisconnect:
         logger.info("WebSocket connection disconnected")
     except Exception as e:
