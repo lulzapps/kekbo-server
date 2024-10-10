@@ -61,11 +61,11 @@ async def websocket_endpoint(websocket: WebSocket):
 
             # parse the received message into json
             message = json.loads(data)
-            if message["action"] == "login":
+            if message["action"] == "login" and message["username"] == "admin" and message["password"] == "admin":
                 logger.debug(f"Logging in as {message['username']}")
                 await websocket.send_text('{"status": "success"}')    
             else:
-                await websocket.send_text(f"Message text was: {data}")
+                await websocket.send_text('{"status": "failed"}')
     except WebSocketDisconnect:
         logger.info("WebSocket connection disconnected")
     except Exception as e:
