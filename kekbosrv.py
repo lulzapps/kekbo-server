@@ -1,9 +1,11 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from pydantic import BaseModel
-import MqttConnector
 import os
 import logging
 import json
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel
+
+import MqttConnector
+import Authenticator
 
 app = FastAPI()
 
@@ -61,15 +63,20 @@ async def websocket_endpoint(websocket: WebSocket):
 
             # parse the received message into json
             message = json.loads(data)
-            if message["action"] == "login" and message["username"] == "admin" and message["password"] == "admin":
-                logger.debug(f"Logging in as {message['username']}")
-                await websocket.send_text('{"status": "success"}')    
-            else:
-                await websocket.send_text('{"status": "failed"}')
+            if message["action"] == "login":
+                logger.debug(f"11Authenticating user {message['username']}")
+                auth = Authenticator.Authenticator()
+                logger.debug(f"22Authenticating user {message['username']}")
+                if auth.authenticate(message['username'], message['password']):
+                    logger.debug(f"Logging in as {message['username']}")
+                    await websocket.send_text('{"status": "success"}')
+                else:
+                    logger.debug(f"Failed to login as {message['username']}")
+                    await websocket.send_text('{"status": "failed"}')
     except WebSocketDisconnect:
-        logger.info("WebSocket connection disconnected")
+        logger.info("WebSocketDisconnect")
     except Exception as e:
-        logger.error(f"WebSocket error: {e}")
+        logger.error(f"Exception: {e}")
 
 if __name__ == "__main__":
     import uvicorn
