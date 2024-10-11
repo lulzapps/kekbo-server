@@ -18,7 +18,7 @@ class Authenticator:
         
     def authenticate(self, username, password):
         cursor = self.db.cursor()
-        cursor.execute("SELECT * FROM users WHERE username = %s", username)
+        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
         result = cursor.fetchall()
         for row in result:
             logger.debug(f"Found user: {row}")

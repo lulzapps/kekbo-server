@@ -64,9 +64,7 @@ async def websocket_endpoint(websocket: WebSocket):
             # parse the received message into json
             message = json.loads(data)
             if message["action"] == "login":
-                logger.debug(f"11Authenticating user {message['username']}")
                 auth = Authenticator.Authenticator()
-                logger.debug(f"22Authenticating user {message['username']}")
                 if auth.authenticate(message['username'], message['password']):
                     logger.debug(f"Logging in as {message['username']}")
                     await websocket.send_text('{"status": "success"}')
