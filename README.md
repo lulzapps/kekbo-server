@@ -1,6 +1,18 @@
-# Running
+## API Notes
 
-## Windows
+### Login
+```json
+{"action": "login", "username": <str>, "password": <str>}
+```
+
+### Send Message
+```json
+{"action": "send_message", "to": <uuid:str>, "message": <str>}
+```
+
+## Running
+
+### Windows
 
 * Install Python 3.12.6 oir higher and make sure Python is in your PATH.
 * Checkout the code `git clone <repo>`

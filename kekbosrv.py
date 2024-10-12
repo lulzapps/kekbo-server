@@ -1,4 +1,3 @@
-import os
 import logging
 import json
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -6,6 +5,8 @@ from pydantic import BaseModel
 
 import MqttConnector
 import Authenticator
+from SessionManager import SessionManager
+from KekboTools import *
 
 app = FastAPI()
 
@@ -15,18 +16,6 @@ logger.setLevel(logging.DEBUG)
 class PublishMessage(BaseModel):
     topic: str
     message: str
-
-def running_in_docker():
-    if os.path.exists("/.dockerenv"):
-        return True
-    try:
-        with open("/proc/1/cgroup", "rt") as f:
-            for line in f:
-                if "docker" in line:
-                    return True
-    except FileNotFoundError:
-        pass
-    return False
 
 # Define MQTT broker connection settings
 BROKER_DOCKER_HOST = "mosquitto"
@@ -41,15 +30,30 @@ if running_in_docker():
 else:
     mqtt_client = MqttConnector.MqttConnector(BROKER_NATIVE_HOST, BROKER_NATIVE_PORT)
 
-@app.get("/helloworld")
-async def helloworld():
-    return {"message": "Hello World"}
+sessions = SessionManager()
 
-# Use the Pydantic model to validate the request body
-@app.post("/publish")
-async def publish_message(data: PublishMessage):
-    mqtt_client.publish_message(data.topic, data.message)
-    return {"status": "Message published"}
+@app.get("/status")
+async def status():
+    info = {}
+    info["session_count"] = sessions.get_session_count()
+    return info
+
+async def on_message(websocket, data):
+    logger.debug(f"Received: {data}")
+    message = json.loads(data)
+    if message["action"] == "login":
+        auth = Authenticator.Authenticator()
+        if auth.authenticate(message['username'], message['password']):
+            logger.debug(f"Logging in as {message['username']}")
+            sessions.add_session(message['username'])
+            await websocket.send_text('{"status": "success"}')
+        else:
+            logger.debug(f"Failed to login as {message['username']}")
+            sessions.remove_session(message['username'])
+            await websocket.send_text('{"status": "failed"}')
+    elif message["action"] == "logout":
+        logger.debug(f"Logging out")
+        await websocket.send_text('{"status": "success"}')
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -57,20 +61,12 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
         while True:
-            logger.debug("waiting for text")
             data = await websocket.receive_text()
             logger.debug(f"Received: {data}")
-
-            # parse the received message into json
-            message = json.loads(data)
-            if message["action"] == "login":
-                auth = Authenticator.Authenticator()
-                if auth.authenticate(message['username'], message['password']):
-                    logger.debug(f"Logging in as {message['username']}")
-                    await websocket.send_text('{"status": "success"}')
-                else:
-                    logger.debug(f"Failed to login as {message['username']}")
-                    await websocket.send_text('{"status": "failed"}')
+            if not is_valid_json(data):
+                await websocket.send_text('{"status": "failed"}')
+                continue
+            await on_message(websocket, data)
     except WebSocketDisconnect:
         logger.info("WebSocketDisconnect")
     except Exception as e:
