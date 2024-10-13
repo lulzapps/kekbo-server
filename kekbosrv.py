@@ -2,6 +2,7 @@ import logging
 import json
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
+import mysql.connector
 
 import MqttConnector
 import Authenticator
@@ -27,8 +28,22 @@ BROKER_NATIVE_PORT = 9001
 # Initialize the MQTT client
 if running_in_docker():
     mqtt_client = MqttConnector.MqttConnector(BROKER_DOCKER_HOST, BROKER_DOCKR_PORT)
+    dbconn = mysql.connector.connect(
+        host = BROKER_DOCKER_HOST,
+        user = "root",
+        password = "rootpassword",
+        database = "yourdatabase",
+        charset = 'utf8mb4',
+        collation = 'utf8mb4_unicode_ci')
 else:
     mqtt_client = MqttConnector.MqttConnector(BROKER_NATIVE_HOST, BROKER_NATIVE_PORT)
+    dbconn = mysql.connector.connect(
+        host = BROKER_NATIVE_HOST,
+        user = "root",
+        password = "rootpassword",
+        database = "yourdatabase",
+        charset = 'utf8mb4',
+        collation = 'utf8mb4_unicode_ci')
 
 sessions = SessionManager()
 
