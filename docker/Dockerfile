@@ -9,6 +9,7 @@ COPY kekbosrv.py /kekbosrv
 COPY requirements.txt /kekbosrv
 COPY MqttConnector.py /kekbosrv
 COPY Authenticator.py /kekbosrv
+COPY SessionManager.py /kekbosrv
 
 COPY ./sql/init.sql /docker-entrypoint-initdb.d/
 

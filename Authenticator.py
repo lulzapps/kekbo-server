@@ -17,10 +17,18 @@ class Authenticator:
         logger.debug("Connected to database");
         
     def authenticate(self, username, password):
-        cursor = self.db.cursor()
-        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
-        result = cursor.fetchall()
-        for row in result:
-            logger.debug(f"Found user: {row}")
-        cursor.close()
-        return len(result) > 0
+        try:
+            logger.debug(f"Authenticating user [{username}] with password [{password}]")
+            cursor = self.db.cursor()
+            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+            result = cursor.fetchall()
+            for row in result:
+                username2 = row[1]
+                password2 = row[3]
+                if username == username2 and password == password2:
+                    logger.debug(f"User {username} authenticated")
+                    return True
+            logger.debug(f"User {username} not authenticated")
+            return False
+        finally:
+            cursor.close()
